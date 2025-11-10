@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krage Hardware Database</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Admin Mode Banner */
+        .admin-banner {
+            display: none;
+            background: #ffc107;
+            color: #000;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+
+        .admin-banner.active {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Header Section */
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .revision-info {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        /* Controls Section */
+        .controls-section {
+            padding: 20px;
+            background: #fff;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            font-size: 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Filter Section */
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        /* Admin Controls */
+        .admin-controls {
+            display: none;
+            padding: 20px;
+            background: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+        }
+
+        .admin-controls.active {
+            display: block;
+        }
+
+        .admin-controls h3 {
+            margin-bottom: 15px;
+            color: #856404;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 14px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+
+        /* Editable cells in admin mode */
+        .editable {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .editable:hover {
+            background: #e7f3ff;
+        }
+
+        .editing {
+            padding: 0;
+        }
+
+        .editing input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #667eea;
+            font-size: 14px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Location Badge */
+        .location-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #adb5bd;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #495057;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Revision Table */
+        .revision-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .revision-table th {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .revision-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        /* Admin action buttons */
+        .admin-action-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0 2px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            select {
+                width: 100%;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls-section {
+                padding: 15px;
+            }
+
+            /* Hide less important columns on mobile */
+            .hide-mobile {
+                display: none;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .controls-section,
+            .admin-banner,
+            .admin-controls,
+            .admin-action-btn {
+                display: none !important;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Mode Banner -->
+    <div class="admin-banner" id="adminBanner">
+        🔒 ADMIN MODE ACTIVE - All changes are saved locally 🔒
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔧 Krage Hardware Database</h1>
+            <div class="revision-info" id="revisionInfo">
+                Current Revision: <span id="currentRevision">1.0</span>
+            </div>
+        </div>
+
+        <!-- Admin Controls (Hidden by default) -->
+        <div class="admin-controls" id="adminControls">
+            <h3>Administrator Controls</h3>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="showAddItemModal()">
+                    ➕ Add New Item
+                </button>
+                <button class="btn btn-warning" onclick="showRevisionModal()">
+                    📝 Add Revision Note
+                </button>
+                <button class="btn btn-primary" onclick="exportDatabase()">
+                    💾 Export Database
+                </button>
+                <button class="btn btn-secondary" onclick="importDatabase()">
+                    📂 Import Database
+                </button>
+                <button class="btn btn-danger" onclick="exitAdminMode()">
+                    🚪 Exit Admin Mode
+                </button>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <!-- Search Bar -->
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search any column... (Item ID, Description, Part Numbers, Location, etc.)">
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-container">
+                <div class="filter-group">
+                    <span class="filter-label">Status:</span>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="OBSOLETE">Obsolete</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Location:</span>
+                    <select id="locationFilter">
+                        <option value="">All Locations</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="resetFilters()">
+                    🔄 Reset Filters
+                </button>
+                <button class="btn btn-success" onclick="exportToCSV()">
+                    📊 Export to CSV
+                </button>
+                <button class="btn btn-secondary" onclick="window.print()">
+                    🖨️ Print Table
+                </button>
+                <button class="btn btn-primary" onclick="showRevisionHistory()">
+                    📋 View Revision History
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                        <tr>
+                            <th onclick="sortTable(1)">Item ID</th>
+                            <th onclick="sortTable(2)">Description</th>
+                            <th onclick="sortTable(3)">Location</th>
+                            <th onclick="sortTable(4)" class="hide-mobile">Material Description</th>
+                            <th onclick="sortTable(6)" class="hide-mobile">Wurth PN</th>
+                            <th onclick="sortTable(7)" class="hide-mobile">Trane PN</th>
+                            <th onclick="sortTable(0)">Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="itemModalTitle">Add New Item</h2>
+                <span class="close" onclick="closeModal('itemModal')">&times;</span>
+            </div>
+            <form id="itemForm" onsubmit="saveItem(event)">
+                <div class="form-group">
+                    <label>Item ID *</label>
+                    <input type="text" id="itemId" required>
+                </div>
+                <div class="form-group">
+                    <label>Description *</label>
+                    <input type="text" id="itemDescription" required>
+                </div>
+                <div class="form-group">
+                    <label>Wurth Part Number</label>
+                    <input type="text" id="wurthPN">
+                </div>
+                <div class="form-group">
+                    <label>Trane Part Number</label>
+                    <input type="text" id="tranePN">
+                </div>
+                <div class="form-group">
+                    <label>Location *</label>
+                    <input type="text" id="location" required>
+                </div>
+                <div class="form-group">
+                    <label>Material Description</label>
+                    <textarea id="materialDescription"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Status *</label>
+                    <select id="status" required>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="OBSOLETE">Obsolete</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-success">💾 Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('itemModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Revision History Modal -->
+    <div id="revisionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Revision History</h2>
+                <span class="close" onclick="closeModal('revisionModal')">&times;</span>
+            </div>
+            <div id="revisionContent">
+                <!-- Revision history will be inserted here -->
+            </div>
+            <div class="action-buttons" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('revisionModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Revision Modal -->
+    <div id="addRevisionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Revision Note</h2>
+                <span class="close" onclick="closeModal('addRevisionModal')">&times;</span>
+            </div>
+            <form id="revisionForm" onsubmit="saveRevision(event)">
+                <div class="form-group">
+                    <label>Revision Number *</label>
+                    <input type="text" id="revisionNumber" required placeholder="e.g., 1.1, 2.0">
+                </div>
+                <div class="form-group">
+                    <label>Description of Changes *</label>
+                    <textarea id="revisionDescription" required placeholder="Describe what was changed..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Author/Editor Name</label>
+                    <input type="text" id="revisionAuthor" placeholder="Your name">
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-success">💾 Save Revision</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addRevisionModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initial hardware data
+        let hardwareData = [
+            ["ACTIVE","AUC0001","LATCH CAM CLASSIC SINGLE 1-1/2 X H=35MM ZNC PLATED","WEL","LATCH CAM CLASSIC SINGLE 1-1/2 X H=35MM ZNC PLATED","AUC0001","ALLEG-232119","X24131010790"],
+            ["ACTIVE","B0008","Bolt; Hex Head, M-5.8 X 8mm","FIN","M5-.8 X 8 HCS FT / Class 8.8 ZNC ","B0008","4HCS885C8ZT-DI933","X22040018020"],
+            ["ACTIVE","H0021","RH SS Hinge, Lift Off ","WEL","LOOSE JOINT HINGE STL (RIGHT)","H0021","SIERRA-LJ8172ORS","X32060819010"],
+            ["ACTIVE","H0022","LH SS Hinge, Lift Off - ","WEL","LOOSE JOINT HINGE STL (LEFT)","H0022","SIERRA-LJ81720LS","X32060819020"],
+            ["ACTIVE","H0023","Hinge; Black Southco Part #96-50-500-50","FIN","96-50-500-50 LIFT OFF HINGE","H0023","SOUTHC-965050050","X32060814230"],
+            ["ACTIVE","N0012","Nut, M4-0.7 Hex","FIN","M4-.7 HX K LCK Nut EXT TTH LCKWSH Class 8 ZNC ","N0012","4NKE84CZT-BN1364","X22020031090"],
+            ["ACTIVE","N0013","Nut; Hex, M6X1X10","FIN & SUB","M6-1.0 HX Nut DIN 934 Class 8 ZNC ","N0013","4NFH86CZT-D934","X28020028040"],
+            ["ACTIVE","N0018","Nut,M5  w/Nylon Insert","FIN","M5-.8 NYL LCK NT","N0018","4NNE65CZT-D985","X28020028030"],
+            ["ACTIVE","N0020","Nut; Weld LG Pilot 5/8-11 ","WEL","HL3 5811 HX WLD NUT LONG PILOT 5/8-11","N0020","BUCKE-HL35811","X28080032180"],
+            ["ACTIVE","N0021","Nut,Weld; HEX; M8X1.25 ","WEL","3A86151H08-REVL METRIC WLD NUT PLAIN M8","N0021","C-3A86151H08-REVL","X28080041010"],
+            ["ACTIVE","N0022","Nut,Weld; HEX, M12X1.75 ","WEL","HS6M12 WLD NUT PLAIN M12-1.75","N0022","BUCKE-HS6M12","X28080033060"],
+            ["ACTIVE","N0031","Nut; Hex M8 KEPSNUT","FIN","M8-1.25 HX K LCK Nut EXT TTH LCKWSH Class 8 ZNC ","N0031","4NKE88CZT-BN1364","X22020009090"],
+            ["ACTIVE","N0032","Nut; M8 PEM NUT","SUB","S-M8-1ZI SELF CLINCH NUT M8 ZNC","N0032","PEM-SM81ZI","X28070042020"],
+            ["ACTIVE","N0033","Nut; M4 X 0.70 Locknut w/ Inse","FIN","M4-.7 HX LCK Nut DIN 985 Class 6 ZNC ","N0033","4NNE864CZT-D985","X28020045020"],
+            ["ACTIVE","N0034","Nut; Lock Pem M10 X 1.5","SUB","H-M10-ZI SELF CLINCH NUT PEM NUT ZNC M10-1.50","N0034","PEM-HM10ZI","X28070002020"],
+            ["ACTIVE","N0035","Nut; PEM M6-1 ZI","SUB","S-M6-1ZI SELF CLINCH NUT ZNC M6","N0035","PEM-SM61ZI","X28070007020"],
+            ["ACTIVE","N0036","M6 X 1 Keeps Nut","FIN","M6-1.0 HX K LCK Nut EXT TTH LCKWSH Class 8 ZNC ","N0036","4NKE86CZT-BN1364","X28020001080"],
+            ["ACTIVE","N0037","Weld Nut M14","WEL","M14-2.0 Hex Weld Nut 3 Projections DIN - 929 Steel Plain","N0037","4NWH3PST14CPL-D929","X28080002070"],
+            ["ACTIVE","N0039","Nut; M4 Serrated Flge Locking","FIN","M4-.7 Serrated Hex Flange Lock Nut DIN - 6923 / ISO 4161 Class 8 Zinc Clear Trivalent","N0039","4NWF84CZT-D6923","X22020028020"],
+            ["ACTIVE","N0040","Nut; M4 PEM","SUB & FIN","M4 SLF CLNCH NT STL","N0040","PEM-SM41ZI-OE","X28070041020"],
+            ["ACTIVE","N0042","Nut,Weld; M8X1.25","WEL","M8 x 1.25 WLD NT PLN STL","N0042","BUCKE-NDM08038-OE","X28080014040"],
+            ["ACTIVE","N0043","Nut; M6 Serrated Flange Lockin","FIN","M6 Srt HXFL LN Mag 565","N0043","4NWF86CM5-D6923-560","X30750004060"],
+            ["ACTIVE","N0044","Nut,M10 X 1.5 PEM","SUB","M10 X 1.5 PEM - S-M10- 1ZI","N0044","PEM-SM101-OE","X28070070020"],
+            ["ACTIVE","N0045","M8-1.25 Serrated Hex Flange Lo","FIN","M8-1.25 SRRT HX FLN LCK Nut / Class 8 ZNC ","N0045","4NWF88CZT-D6923","X28020041040"],
+            ["ACTIVE","R0004","Rivet, Door,3/16D/1/8G","SUB & FIN","3/16 X 1/8 Blind Rivet IFI-114 Closed End #62 ALM / STL","R0004","7RBDCAS18R12","X29010131020"],
+            ["ACTIVE","R0006","Rivet,1/8D x 1/8G","SUB & FIN","1/8 X 1/8  Rivet IFI-114 Open End #42 STL","R0006","7RBDOST12R12","X29010149020"],
+            ["ACTIVE","R0010","Rivet, Door,3/16D/1/8G SSTEEL","SUB","3/16 x 1/8 Blind Rivet IFI-114 Closed End 18.8 STL","R0010","7RBDCSS18R12","X22031005040"],
+            ["ACTIVE","R0011","Rivet, Nut Hexagon RTWD","FIN","RIV NUT STL ZNC M8-1.25 X 21MM 10.97MM","R0011","C-X28070457040","X29020010040"],
+            ["ACTIVE","R0013","Rivet; 1/4D/0.375G Steel","SUB & FIN","FST MBLT.25D SS AVDEL","R0013","AVDEL-CCPV0806-OE","X29050015050"],
+            ["ACTIVE","S0021","Screw, Knurled Captive","FIN","MFL-LK034-CZ KNURLED CAPTIVE SCR 17-13-304-11","S0021","MATDAN-MFLLK034CZ","X30720002110"],
+            ["ACTIVE","S0022","Screw, Captive Screw Receptacl","SUB","17-10015-13 CAPTIVE SCR RETAINER ZNC","S0022","SOUTHC-171001513","X30720003130"],
+            ["ACTIVE","S0023","Screw, Flat Type Retainer","FIN","CRR-16 CRIMP RING RETAINER ZNC","S0023","PIVOT-CRR16","X30740001160"],
+            ["ACTIVE","S0024","Screw, M4-0.7 X 10mm Hex Head","FIN","M4-.7 x 10 HCS FT / Class 8.8 ZNC ","S0024","4HCS884C10ZT-DI933","X22040003100"],
+            ["ACTIVE","S0025","Screw, M6-1.0x16mm Lg Hex Head","SUB & FIN","M6-1.0 x 16 SL  HX WSH HD TAP SCR STL ZNC ","S0025","4TUWST6C16ZT-D7500D","X30160002060"],
+            ["ACTIVE","S0026","Stud, Pem M4 X.7 X 18MM RTWD","SUB","FH-M4-18ZI PEM SELF CLINCH STUD STL ZNC","S0026","PEM-FHM418ZI","X30720006180"],
+            ["ACTIVE","S0027","Stud, Pem M6 X 1 X 18MM RTWD","SUB & FIN","FH-M6-18ZI PEM SELF CLINCH STUD STL ZNC","S0027","PEM-FHM618ZI","X30720005180"],
+            ["ACTIVE","S0028","Stud,PEM M10 X 30MM","SUB","HFH-M10-30ZI SELF CLINCH STUD STL ZNC M10","S0028","PEM-HFHM1030ZI","X30720004200"],
+            ["ACTIVE","W0003","Washer 5/16 x 3/4in OD Flat","FIN","1/4 SAE FLT WSH STL ZNC ","W0003","7WSAST25RZT","X26010002180"],
+            ["ACTIVE","W0005","Washer, 1/4 Helical Lock","FIN","1/4 Split LCK WSH STL ZNC ","W0005","7LOCST25RZT","X26020048180"],
+            ["ACTIVE","W0009","Washer, Lock, 4MM","FIN","M4 External Tooth Lock Washer DIN 6797A - Steel Zinc Clear Trivalent","W0009","4LETST4NZT-D6797A","X22010025040"],
+            ["ACTIVE","W0010","Washer, Flat, M4","SUB","M4 FLT WSH DIN 433 STL ZNC ","W0010","4WCFST4NZT-D433","X22010017040"],
+            ["ACTIVE","WS0001","Weld Stud, M4-.07 X 12MM","WEL","STUD WLD M4-.07 X 12MM","WS0001","BUCKE-HWM04012","X30600002120"],
+            ["ACTIVE","WS0002","Weld Stud M5-.08 X 10MM","WEL","STUD WLD M5-.08 X 10MM","WS0002","BUCKE-HWM05010","X30600002100"],
+            ["ACTIVE","WS0012","Weld Stud; M8-1.25 X 20mm","WEL","STUD WLD M8-1.25 X 20MM","WS0012","BUCKE-HWM08020","X30600002200"],
+            ["ACTIVE","S0032","Screw; M6 X 1 X 12 PH Thd Roll","SUB & FIN","M6-1.0 x 12 UnSLT IND HX WSH HD TAP SCR STL ZNC ","S0032","4TUWST6C12ZT-D7500D","X25030266030"],
+            ["ACTIVE","S0033","Screw; 6MM x 75MM Hex Hd","SUB & FIN","M6-1.0 x 75 HCS FT / Class 8.8 ZNC ","S0033","4HCS886C75ZT-DI933","X25030214540"],
+            ["ACTIVE","S0034","Screw; 6MM X 120MM Hex Hd","SUB","M6-1.0 x 120 HCS FT / Class 8.8 ZNC ","S0034","4HCS886C120ZT-DI933","X25030214720"],
+            ["ACTIVE","S0035","Screw; 6MM X 110MM","SUB","M6-1.0 X 110 HCS FT / Class 8.8 ZNC ","S0035","4HCS886C110ZT-DI933","X25030214710"],
+            ["ACTIVE","S0036","Screw; 6MM X 90MM","SUB","M6-1.0 x 90 HCS FT / Class 8.8 ZNC ","S0036","4HCS886C90ZT-DI933","X25030214690"],
+            ["ACTIVE","S0037","Screw; M8X16 Hex Hd, Thread Fo","SUB & FIN","M8-1.25 x 16 UnSLT IND HX WSH HD TAP SCR THRD FRM SCR STL ZNC","S0037","4TUWCAST8C16ZW-D7500DE-5M-SC","X25020604010"],
+            ["ACTIVE","S0039","Screw, Met Phl Pan M4 X 10MM","SUB","M4-.7 X 10 PHLP TAP SCR ","S0039","4TXPST4C10ZT-D7500CE","X25020623080"],
+            ["ACTIVE","S0041","Stud,PEM,M6-1.0X12MM ","SUB & FIN","FH-M6-12ZI PEM SELF CLINCH STUD ST ZNC","S0041","PEM-FHM612ZI","X25029936001"],
+            ["ACTIVE","S0042","Screw,Hex,Cp,8.8, 4MM-0.7 X 35","SUB","M4-.7 x 35 Hex Head Cap Screw Full - Thread DIN 933 / ISO 4017 Class 8.8 Zinc Clear Trivalent","S0042","4HCS884C35ZT-DI933","X25450030290"],
+            ["ACTIVE","S0043","Spacer, 1/4X3/4, #8 ALM","SUB",".166 x 3/4 Rd Spc 1/4 OD Alum","S0043","7SPR25AL166D75","X22010737010"],
+            ["ACTIVE","S0047","M5 X 12 Flange Bolt","SUB & FIN","M5-.8 X 12 UnSLT IND HX WSH HD TAP SCR STL ZNC ","S0047","4TUWST5C12ZT-D7500D","X25020727020"],
+            ["ACTIVE","S0049","Screw, Hex Head M4 X 10MM","FIN","M4-.7 X 10 UnSLT IND HX WSH HD TAP SCR STL ZNC ","S0049","4TUWST4C10ZT-D7500D","X25020740010"],
+            ["ACTIVE","S0052","Stud, PEM; M4X0.7X12MM ","SUB & FIN","FH-M4-12ZI PEM SELF CLINCH STUD STL ZNC","S0052","PEM-FHM412ZI","X25180663020"],
+            ["ACTIVE","S0053","Stud, PEM; M5X0.8X12MM ","SUB","FH-M5-12ZI PEM SELF CLINCH STUD STL ZNC","S0053","PEM-FHM512ZI","X25180679"],
+            ["ACTIVE","S0063","Spacer; Nylon 1/2OD X 1 Long","FIN","1/4 x 1 Spacer 1/2 NYL","S0063","7SPR50NY25R100","X20450046001"],
+            ["ACTIVE","S0064","Stud; PEM Stud, M8 X 1.25 X 12","SUB","FH-M8-12ZI SELF CLINCH STUD ZN M8 X 1.25 X 12MM","S0064","PEM-FHM812ZI","X25029906001"],
+            ["ACTIVE","S0065","Screw; M4 X 10 Countersunk","FIN","M4-.7 x 10 PHLP FLTHD MACH SCR Class 4.8 ZNC ","S0065","4MXF484C10ZT-D965A",""],
+            ["ACTIVE","S0067","Screw; M8 X 12mm Hex Head","SUB","M8-1.25 x 12 UnSLT IND HX WSH HD TAP SCR STL ZNC ","S0067","4TUWST8C12ZT-D7500D","X25020604040"],
+            ["ACTIVE","S0069","Screw, Coated M6 X 16","SUB & FIN","M6-1.0 x 16 Un Ind HWH TAP SCR (K-S69)","S0069","4TUWST6C16M5-D7500D-565","X25029926001"],
+            ["ACTIVE","S0070","Screw, Coated M6 X 12","FIN & SUB","M6-1.0 x 12 UnSLT IND HX WSH HD TAP SCR E STL Wax Coated","S0070","4TUWST6C12M5-D7500DE-565-WAX-SC","X25029926003"],
+            ["ACTIVE","S0071","Screw; Trilobal M8 X 12MM","SUB","M8 x 12 Unsltd Ind HxW (K-S71)","S0071","4TUWST8C12M5-D7500D-565-PLC","X25029927006"],
+            ["ACTIVE","S0073","Stud; PEM, M8 X 1.25X 20in","SUB & FIN","FH-M8-20 SELF CLINCH STUD STL M8 X 1.25 X 20","S0073","PEM-FHM820-OE","X25029990001"],
+            ["ACTIVE","S0074","Stud, PEM M4 X 18mm SS","SUB","FHS-M4-18 CLINCH STUD SS M4 X 18MM","S0074","PEM-FHSM418-OE","X25180689001"],
+            ["ACTIVE","S0075","Screw,HexCap M5 X 8 Magni565","FIN","M5-.8 x 8 HCS FT COAT (K-S75)","S0075","4HCS885C8M5-DI933-565","X25029993001"],
+            ["ACTIVE","S0077","PEM Stud M8 x 15MM","FIN","M8-1.25 x 15 ST SC STUD","S0077","PEM-FHM815-OE","X25460023001"],
+            ["ACTIVE","S0078","Screw; Hex HD Cap THD Roll M8 X 1.25 X 16","SUB & FIN","M8 x 16 USLT IND HX WSH HD TAP SCR THRD","S0078","4TUWCAST8C16M5-D7500DE-565-SC","X25029927001"],
+            ["ACTIVE","S0079","Stud; PEM 10-32 X .50","FIN","10-32 x 1/2 Sf Clch StD Znc","S0079","PEM-FH0328ZI-OE","X25029845001"],
+            ["ACTIVE","S0080","Stud, HFH-M8 X 35","SUB","HFH-M8-35 Or Equal M8-1.25 x 35mm High - Strength Steel Stud with Zinc Clear Trivalent","S0080","PEM-HFHM835-OE","X13570248001"],
+            ["ACTIVE","S0081","Stud, SelfClinching, M10 X 35","SUB","M10-1.5 Stl Slf Clnch Std Znc","S0081","PEM-HFHM1035ZI-OE","X25029923001"],
+            ["ACTIVE","W0011","Washer,Bond Neop ZN #10","FIN","#12 x 9/16 WSH STL ZNC ","W0011","7WBOEPST12N56ZT","X22040063010"],
+            ["ACTIVE","W0017","Washer; M5 Helical Spring Wash","FIN","M5 x 50 Split Lock Washer DIN 127B","W0017","4LOCST5NZT-D127B","X22020031100"],
+            ["ACTIVE","W0018","Washer, M5 Flat Washer","FIN","M5 FLT WSH STL ZNC ","W0018","4WCFST5NZT-D125A",""],
+            ["ACTIVE","W0023","Washer; .281ID X .625OD PL","FIN","1/4  WSH HRD STL  1 ZNC YEL","W0023","7WA3T125RZY","X22050232090"],
+            ["ACTIVE","W0024","Washer; Lock Helical Sp; 6MM N","FIN","M6 Split LCK WSH DIN 127B STL ZNC YEL","W0024","4LOCST6NZY-D127B","X22020031010"],
+            ["ACTIVE","W0025","Washer; Spring-Contact, 5MM COATED","FIN","M5 Rib Lk Ws Hvy ","W0025","4LRBHTST5NZF-NFE25511M","X22017302004"],
+            ["ACTIVE","W0026","Washer; 6MM (NOM) ID X 18MM OD COATED","FIN","M6 FW St Mag 565","W0026","4WCFST6NM5-D125A-560565","X22017312004"],
+            ["ACTIVE","WN0001","Weld Nut; Hex 3/8-16-1.0 X30MM","WEL","3/8-16 HX WLD NUT 3X PRJCT","WN0001","BUCKE-HS33816",""],
+            ["ACTIVE","WS0003","Weld Stud M5-.08 X 12MM","WEL","STUD WLD M5-.08 X 12MM","WS0003","BUCKE-HWM05012",""],
+            ["ACTIVE","WS0004","Weld Stud M5-.08 X 20MM","WEL","STUD WLD M5-.08 X 20MM","WS0004","BUCKE-HWM05020",""],
+            ["ACTIVE","WS0005","Weld Stud M6-.1.0 X 12MM","WEL","STUD WLD M6-1.0 X 12MM","WS0005","BUCKE-HWM06012",""],
+            ["ACTIVE","WS0006","Weld Stud M6-1.0 X 18MM","WEL","OFC-0791-HWM STUD WLD M6-1.0 X 18MM","WS0006","BUCKE-OFC0791HWM",""],
+            ["ACTIVE","WS0007","Weld Stud M6-1.0 X 20MM","WEL","STUD WLD M6-1.0 X 20MM","WS0007","BUCKE-HWM06020",""],
+            ["ACTIVE","WS0008","Weld Stud M6-1.0 X 30MM","WEL","STUD WLD M6-1.0 X 30MM","WS0008","BUCKE-HWM06030",""]
+        ];
+
+        // Global variables
+        let currentData = [];
+        let isAdminMode = false;
+        let editingRow = null;
+        let currentRevision = "1.0";
+        let revisionHistory = [];
+        let sortColumn = -1;
+        let sortDirection = 1;
+
+        // Admin password (change this to your desired password)
+        const ADMIN_PASSWORD = 'admin123';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromLocalStorage();
+            currentData = [...hardwareData];
+            initializeApp();
+        });
+
+        function initializeApp() {
+            populateLocationFilter();
+            renderTable();
+            setupEventListeners();
+            updateRevisionDisplay();
+            
+            // Initialize revision history if empty
+            if (revisionHistory.length === 0) {
+                revisionHistory.push({
+                    number: "1.0",
+                    description: "Initial database release",
+                    author: "Ruben Valdez",
+                    date: "2025-11-06"
+                });
+                saveToLocalStorage();
+            }
+        }
+
+        // Load data from localStorage
+        function loadFromLocalStorage() {
+            // Check if we need to force refresh (version check)
+            const dataVersion = localStorage.getItem('krageDataVersion');
+            const currentDataVersion = '2.0'; // Updated version to force refresh
+            
+            // If version mismatch or no version, clear old data
+            if (dataVersion !== currentDataVersion) {
+                console.log('Data version mismatch - clearing old data');
+                localStorage.removeItem('krageHardwareData');
+                localStorage.removeItem('krageRevisionHistory');
+                localStorage.removeItem('krageCurrentRevision');
+                localStorage.setItem('krageDataVersion', currentDataVersion);
+                return; // Don't load old data
+            }
+            
+            const savedData = localStorage.getItem('krageHardwareData');
+            const savedRevisions = localStorage.getItem('krageRevisionHistory');
+            const savedCurrentRevision = localStorage.getItem('krageCurrentRevision');
+
+            if (savedData) {
+                try {
+                    hardwareData = JSON.parse(savedData);
+                } catch (e) {
+                    console.error('Error loading saved data:', e);
+                }
+            }
+
+            if (savedRevisions) {
+                try {
+                    revisionHistory = JSON.parse(savedRevisions);
+                } catch (e) {
+                    console.error('Error loading revision history:', e);
+                }
+            }
+
+            if (savedCurrentRevision) {
+                currentRevision = savedCurrentRevision;
+            }
+        }
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('krageHardwareData', JSON.stringify(hardwareData));
+            localStorage.setItem('krageRevisionHistory', JSON.stringify(revisionHistory));
+            localStorage.setItem('krageCurrentRevision', currentRevision);
+            localStorage.setItem('krageDataVersion', '2.0'); // Save version
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            
+            // Search input with admin mode trigger
+            searchInput.addEventListener('input', function() {
+                const value = this.value;
+                
+                // Check for admin password
+                if (value.toLowerCase() === ADMIN_PASSWORD.toLowerCase()) {
+                    enterAdminMode();
+                    this.value = '';
+                    return;
+                }
+                
+                filterTable();
+            });
+
+            // Filter dropdowns
+            document.getElementById('statusFilter').addEventListener('change', filterTable);
+            document.getElementById('locationFilter').addEventListener('change', filterTable);
+
+            // Close modals on outside click
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.classList.remove('active');
+                }
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Escape key to exit admin mode
+                if (e.key === 'Escape' && isAdminMode) {
+                    exitAdminMode();
+                }
+            });
+        }
+
+        // Populate location filter
+        function populateLocationFilter() {
+            const locations = [...new Set(hardwareData.map(item => item[3]))].sort();
+            const select = document.getElementById('locationFilter');
+            
+            // Clear existing options except the first one
+            select.innerHTML = '<option value="">All Locations</option>';
+            
+            locations.forEach(location => {
+                if (location) {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        // Update revision display
+        function updateRevisionDisplay() {
+            document.getElementById('currentRevision').textContent = currentRevision;
+        }
+
+        // Enter admin mode
+        function enterAdminMode() {
+            isAdminMode = true;
+            document.getElementById('adminBanner').classList.add('active');
+            document.getElementById('adminControls').classList.add('active');
+            
+            // Re-render table with admin controls
+            renderTable();
+            
+            // Show notification
+            showNotification('Admin mode activated', 'success');
+        }
+
+        // Exit admin mode
+        function exitAdminMode() {
+            if (confirm('Are you sure you want to exit admin mode? Any unsaved changes will be lost.')) {
+                isAdminMode = false;
+                document.getElementById('adminBanner').classList.remove('active');
+                document.getElementById('adminControls').classList.remove('active');
+                
+                // Re-render table without admin controls
+                renderTable();
+                
+                showNotification('Admin mode deactivated', 'info');
+            }
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            currentData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                
+                // Item ID
+                const td1 = document.createElement('td');
+                td1.textContent = row[1];
+                if (isAdminMode) {
+                    td1.classList.add('editable');
+                    td1.onclick = () => makeEditable(index, 1, td1);
+                }
+                tr.appendChild(td1);
+
+                // Description
+                const td2 = document.createElement('td');
+                td2.textContent = row[2];
+                if (isAdminMode) {
+                    td2.classList.add('editable');
+                    td2.onclick = () => makeEditable(index, 2, td2);
+                }
+                tr.appendChild(td2);
+
+                // Location
+                const td3 = document.createElement('td');
+                td3.innerHTML = `<span class="location-badge">${row[3]}</span>`;
+                if (isAdminMode) {
+                    td3.classList.add('editable');
+                    td3.onclick = () => makeEditable(index, 3, td3);
+                }
+                tr.appendChild(td3);
+
+                // Material Description (MOVED HERE - after Location)
+                const td4 = document.createElement('td');
+                td4.textContent = row[4];
+                td4.classList.add('hide-mobile');
+                if (isAdminMode) {
+                    td4.classList.add('editable');
+                    td4.onclick = () => makeEditable(index, 4, td4);
+                }
+                tr.appendChild(td4);
+
+                // Wurth PN
+                const td5 = document.createElement('td');
+                td5.textContent = row[6];
+                td5.classList.add('hide-mobile');
+                if (isAdminMode) {
+                    td5.classList.add('editable');
+                    td5.onclick = () => makeEditable(index, 6, td5);
+                }
+                tr.appendChild(td5);
+
+                // Trane PN
+                const td6 = document.createElement('td');
+                td6.textContent = row[7];
+                td6.classList.add('hide-mobile');
+                if (isAdminMode) {
+                    td6.classList.add('editable');
+                    td6.onclick = () => makeEditable(index, 7, td6);
+                }
+                tr.appendChild(td6);
+
+                // Status
+                const td7 = document.createElement('td');
+                const statusClass = row[0].toLowerCase().replace(' ', '-');
+                td7.innerHTML = `<span class="status-badge status-${statusClass}">${row[0]}</span>`;
+                if (isAdminMode) {
+                    td7.classList.add('editable');
+                    td7.onclick = () => makeEditableStatus(index, 0, td7);
+                }
+                tr.appendChild(td7);
+
+                // Actions
+                const td8 = document.createElement('td');
+                if (isAdminMode) {
+                    td8.innerHTML = `
+                        <button class="btn btn-danger admin-action-btn" onclick="deleteItem(${index})">
+                            🗑️ Delete
+                        </button>
+                    `;
+                } else {
+                    td8.innerHTML = `
+                        <button class="btn btn-primary admin-action-btn" onclick="viewItemDetails(${index})">
+                            👁️ View
+                        </button>
+                    `;
+                }
+                tr.appendChild(td8);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Make cell editable
+        function makeEditable(rowIndex, colIndex, cell) {
+            if (cell.classList.contains('editing')) return;
+
+            const currentValue = hardwareData[rowIndex][colIndex];
+            cell.classList.add('editing');
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.focus();
+            
+            input.onblur = function() {
+                const newValue = input.value;
+                if (newValue !== currentValue) {
+                    hardwareData[rowIndex][colIndex] = newValue;
+                    saveToLocalStorage();
+                    showNotification('Cell updated successfully', 'success');
+                }
+                filterTable(); // Re-render with filters applied
+            };
+            
+            input.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    input.value = currentValue;
+                    input.blur();
+                }
+            };
+            
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.select();
+        }
+
+        // Make status editable with dropdown
+        function makeEditableStatus(rowIndex, colIndex, cell) {
+            if (cell.classList.contains('editing')) return;
+
+            const currentValue = hardwareData[rowIndex][colIndex];
+            cell.classList.add('editing');
+            
+            const select = document.createElement('select');
+            ['ACTIVE', 'INACTIVE', 'OBSOLETE'].forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.textContent = status;
+                if (status === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+            
+            select.onblur = function() {
+                const newValue = select.value;
+                if (newValue !== currentValue) {
+                    hardwareData[rowIndex][colIndex] = newValue;
+                    saveToLocalStorage();
+                    showNotification('Status updated successfully', 'success');
+                }
+                filterTable();
+            };
+            
+            select.onchange = function() {
+                select.blur();
+            };
+            
+            cell.innerHTML = '';
+            cell.appendChild(select);
+            select.focus();
+        }
+
+        // Delete item
+        function deleteItem(index) {
+            if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                const deletedItem = hardwareData[index];
+                hardwareData.splice(index, 1);
+                currentData = [...hardwareData];
+                saveToLocalStorage();
+                renderTable();
+                showNotification(`Item ${deletedItem[1]} deleted successfully`, 'success');
+            }
+        }
+
+        // View item details
+        function viewItemDetails(index) {
+            const item = currentData[index];
+            alert(`
+Item Details:
+--------------
+Item ID: ${item[1]}
+Description: ${item[2]}
+Wurth PN: ${item[6]}
+Trane PN: ${item[7]}
+Location: ${item[3]}
+Material: ${item[4]}
+Status: ${item[0]}
+            `);
+        }
+
+        // Show add item modal
+        function showAddItemModal() {
+            document.getElementById('itemModalTitle').textContent = 'Add New Item';
+            document.getElementById('itemForm').reset();
+            document.getElementById('itemModal').classList.add('active');
+            editingRow = null;
+        }
+
+        // Save item
+        function saveItem(event) {
+            event.preventDefault();
+            
+            const newItem = [
+                document.getElementById('status').value,
+                document.getElementById('itemId').value,
+                document.getElementById('itemDescription').value,
+                document.getElementById('location').value,
+                document.getElementById('materialDescription').value,
+                document.getElementById('itemId').value, // Duplicate for compatibility
+                document.getElementById('wurthPN').value,
+                document.getElementById('tranePN').value
+            ];
+            
+            if (editingRow !== null) {
+                hardwareData[editingRow] = newItem;
+                showNotification('Item updated successfully', 'success');
+            } else {
+                hardwareData.push(newItem);
+                showNotification('New item added successfully', 'success');
+            }
+            
+            currentData = [...hardwareData];
+            saveToLocalStorage();
+            populateLocationFilter();
+            renderTable();
+            closeModal('itemModal');
+        }
+
+        // Show revision modal
+        function showRevisionModal() {
+            document.getElementById('addRevisionModal').classList.add('active');
+        }
+
+        // Save revision
+        function saveRevision(event) {
+            event.preventDefault();
+            
+            const newRevision = {
+                number: document.getElementById('revisionNumber').value,
+                description: document.getElementById('revisionDescription').value,
+                author: document.getElementById('revisionAuthor').value || 'Unknown',
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            revisionHistory.push(newRevision);
+            currentRevision = newRevision.number;
+            
+            saveToLocalStorage();
+            updateRevisionDisplay();
+            closeModal('addRevisionModal');
+            showNotification('Revision added successfully', 'success');
+        }
+
+        // Show revision history
+        function showRevisionHistory() {
+            const content = document.getElementById('revisionContent');
+            
+            if (revisionHistory.length === 0) {
+                content.innerHTML = '<p>No revision history available.</p>';
+            } else {
+                let html = '<table class="revision-table">';
+                html += '<thead><tr><th>Revision</th><th>Description</th><th>Author</th><th>Date</th></tr></thead>';
+                html += '<tbody>';
+                
+                revisionHistory.forEach(rev => {
+                    html += `<tr>
+                        <td><strong>${rev.number}</strong></td>
+                        <td>${rev.description}</td>
+                        <td>${rev.author}</td>
+                        <td>${rev.date}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                content.innerHTML = html;
+            }
+            
+            document.getElementById('revisionModal').classList.add('active');
+        }
+
+        // Filter table
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value;
+
+            currentData = hardwareData.filter(row => {
+                // Search filter
+                const searchMatch = !searchTerm || row.some(cell => 
+                    cell && cell.toString().toLowerCase().includes(searchTerm)
+                );
+
+                // Status filter
+                const statusMatch = !statusFilter || row[0] === statusFilter;
+
+                // Location filter
+                const locationMatch = !locationFilter || row[3] === locationFilter;
+
+                return searchMatch && statusMatch && locationMatch;
+            });
+
+            renderTable();
+        }
+
+        // Sort table
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+                sortColumn = column;
+            }
+
+            currentData.sort((a, b) => {
+                const aVal = a[column] || '';
+                const bVal = b[column] || '';
+                
+                if (aVal < bVal) return -sortDirection;
+                if (aVal > bVal) return sortDirection;
+                return 0;
+            });
+
+            renderTable();
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('locationFilter').value = '';
+            currentData = [...hardwareData];
+            renderTable();
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            const headers = ['Status', 'Item ID', 'Description', 'Location', 'Material Description', 'Wurth PN', 'Trane PN'];
+            let csv = headers.join(',') + '\n';
+
+            currentData.forEach(row => {
+                const csvRow = [
+                    row[0],
+                    row[1],
+                    `"${row[2]}"`,
+                    row[3],
+                    `"${row[4]}"`,
+                    row[6],
+                    row[7]
+                ];
+                csv += csvRow.join(',') + '\n';
+            });
+
+            downloadFile(csv, 'krage_hardware_export.csv', 'text/csv');
+        }
+
+        // Export database
+        function exportDatabase() {
+            const exportData = {
+                version: currentRevision,
+                exportDate: new Date().toISOString(),
+                data: hardwareData,
+                revisions: revisionHistory
+            };
+
+            const json = JSON.stringify(exportData, null, 2);
+            downloadFile(json, `krage_hardware_backup_${currentRevision}.json`, 'application/json');
+        }
+
+        // Import database
+        function importDatabase() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        const importData = JSON.parse(event.target.result);
+                        
+                        if (confirm('This will replace all current data. Are you sure?')) {
+                            hardwareData = importData.data || [];
+                            revisionHistory = importData.revisions || [];
+                            currentRevision = importData.version || '1.0';
+                            
+                            currentData = [...hardwareData];
+                            saveToLocalStorage();
+                            populateLocationFilter();
+                            updateRevisionDisplay();
+                            renderTable();
+                            
+                            showNotification('Database imported successfully', 'success');
+                        }
+                    } catch (error) {
+                        alert('Error importing file: ' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        // Download file utility
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 3000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            `;
+
+            // Set color based on type
+            switch(type) {
+                case 'success':
+                    notification.style.background = '#28a745';
+                    break;
+                case 'error':
+                    notification.style.background = '#dc3545';
+                    break;
+                case 'info':
+                    notification.style.background = '#17a2b8';
+                    break;
+                default:
+                    notification.style.background = '#6c757d';
+            }
+
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
